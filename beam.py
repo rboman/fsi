@@ -12,7 +12,8 @@ def params(q={}):
     p['tolNR']      = 1.0e-7        # Newton-Raphson tolerance
     p['tend']       = 2.            # final time
     p['dtmax']      = 0.005          # max time step
-    p['bctype']     = 'pydeadload'    # pressure / deadload
+    p['bctype']     = 'pydeadloads'    # pressure / pydeadload1
+                                       # deadload / pydeadloads
     p.update(q)
     return p
 
@@ -65,15 +66,18 @@ def getMetafor(p={}):
     
     #Physical Line(103) - upper surface of the beam (for tests only)
 
+    #   - f(x)=x
     def funct(a): return a
     fct1 = PythonOneParameterFunction(funct)
     
+    #  - basic pwl function
     fct2 = PieceWiseLinearFunction()
     fct2.setData(0.0, 0.0)
     fct2.setData(0.1, 1.0)
     fct2.setData(0.1+1e-15, 0.0)
     fct2.setData(1e10, 0.0)    
 
+    #  - python fct
     def f(time):
         val=0
         t1=0.1
@@ -85,19 +89,49 @@ def getMetafor(p={}):
         return val
     fct3 = PythonOneParameterFunction(f)
 
-    
+    gr = groupset(103)
     if p['bctype']=='pressure':
         trac1 = LoadingInteraction(2)
-        trac1.push(groupset(103))
+        trac1.push(gr)
         interactionset.add(trac1)
         prp = ElementProperties(Traction2DElement)
         prp.put(PRESSURE, -0.1)
         prp.depend(PRESSURE, fct2, Field1D(TM,RE))
         trac1.addProperty(prp)
     elif p['bctype']=='deadload':
-        loadingset.define(groupset(103), Field1D(TY,GF1), -1e-4, fct2)
-    elif p['bctype']=='pydeadload':
-        loadingset.define(groupset(103), Field1D(TY,GF1), -1e-4, fct3)    
+        loadingset.define(gr, Field1D(TY,GF1), -1e-4, fct2)
+    elif p['bctype']=='pydeadload1':
+        loadingset.define(gr, Field1D(TY,GF1), -1e-4, fct3) 
+    elif p['bctype']=='pydeadloads':
+        # calculate xmin-xmax
+        xmin=1e10
+        xmax=-1e10
+        nbnods=gr.getNumberOfMeshPoints()
+        for i in range(nbnods):
+            node = gr.getMeshPoint(i)
+            px = gr.getMeshPoint(i).getPos0().get1()
+            if px<xmin: xmin=px
+            if px>xmax: xmax=px
+        print "(xmin,xmax)=(%f,%f)" % (xmin,xmax)
+        L = xmax-xmin
+        print "L=%f" % L
+        #raw_input()
+        
+        class LObj:
+            def __init__(self, px, L):
+                self.px=px
+                self.L=L
+            def __call__(self, time):
+                import math
+                return time*math.sin(8*math.pi*self.px/self.L)
+            
+        for i in range(nbnods):
+            node = gr.getMeshPoint(i)
+            px = gr.getMeshPoint(i).getPos0().get1()
+            #print "creating load on ", node
+            obj = LObj(px-xmin, L)
+            fct4 = PythonOneParameterFunction(obj)
+            loadingset.define(node, Field1D(TY,GF1), -3e-4, fct4)    
     else:
         raise Exception("Unknown bctype %s" % p['bctype'])
     
