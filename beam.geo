@@ -141,3 +141,26 @@ Physical Line("outlet") = {12};
 Physical Line("slipWall") = {13, 14, 10, 11};
 Physical Line("bodyWall") = {1, 2, 3, 4, 8, 7, 5, 6};
 Physical Surface("internal") = {38, 40, 48, 42, 44, 46, 50, 52, 54, 64, 62, 56, 60, 58};
+
+
+// --- added by RB
+
+// solid domain
+Line(65) = {5, 6};
+Transfinite Line {65} = 6 Using Progression 1;
+Line Loop(66) = {5, 6, 7, 65};
+Plane Surface(67) = {66};
+Transfinite Surface {67};
+Recombine Surface {67}; // tri => quads
+
+Physical Line(101) = {65};         // clamped side of the beam
+Physical Line(102) = {7, 5, 6};    // free surface of the beam
+Physical Line(103) = {7};          // upper surface of the beam (for tests only)
+Physical Surface(101) = {67};      // meshed beam
+
+
+
+
+
+
+
