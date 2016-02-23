@@ -136,11 +136,16 @@ Transfinite Line {31, 36, 35, 34, 33, 32} = 31 Using Progression 0.9;
 Recombine Surface {38, 40, 42, 44, 46, 48};
 
 //Physical boundaries and physical domain
-Physical Line("inlet") = {9};
+/*Physical Line("inlet") = {9};
 Physical Line("outlet") = {12};
 Physical Line("slipWall") = {13, 14, 10, 11};
 Physical Line("bodyWall") = {1, 2, 3, 4, 8, 7, 5, 6};
-Physical Surface("internal") = {38, 40, 48, 42, 44, 46, 50, 52, 54, 64, 62, 56, 60, 58};
+Physical Surface("internal") = {38, 40, 48, 42, 44, 46, 50, 52, 54, 64, 62, 56, 60, 58};*/
+Physical Line(1) = {9};
+Physical Line(2) = {12};
+Physical Line(3) = {13, 14, 10, 11};
+Physical Line(4) = {1, 2, 3, 4, 8, 7, 5, 6};
+Physical Surface(5) = {38, 40, 48, 42, 44, 46, 50, 52, 54, 64, 62, 56, 60, 58};
 
 
 // --- added by RB
@@ -156,7 +161,7 @@ Recombine Surface {67}; // tri => quads
 Physical Line(101) = {65};         // clamped side of the beam
 Physical Line(102) = {7, 5, 6};    // free surface of the beam
 Physical Line(103) = {7};          // upper surface of the beam (for tests only)
-Physical Surface(101) = {67};      // meshed beam
+Physical Surface(100) = {67};      // meshed beam
 
 
 
