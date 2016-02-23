@@ -9,8 +9,10 @@ def params(q={}):
     """ default model parameters
     """
     p={}
-    p['tolNR']      = 1.0e-7   # Newton-Raphson tolerance
-    p['tend']       = 3.       # final time
+    p['tolNR']      = 1.0e-7        # Newton-Raphson tolerance
+    p['tend']       = 2.            # final time
+    p['dtmax']      = 0.01          # max time step
+    p['bctype']     = 'deadload'    # pressure / deadload
     p.update(q)
     return p
 
@@ -50,7 +52,8 @@ def getMetafor(p={}):
     prp = ElementProperties(Volume2DElement)
     app1.addProperty(prp)
     prp.put (MATERIAL, 1)
-
+    prp.put(CAUCHYMECHVOLINTMETH,VES_CMVIM_STD)
+    
     # boundary conditions
     loadingset = domain.getLoadingSet()
 
@@ -71,19 +74,23 @@ def getMetafor(p={}):
     fct2.setData(0.1+1e-12, 0.0)
     fct2.setData(1000., 0.0)    
     
-    trac1 = LoadingInteraction(2) # pressure
-    trac1.push(groupset(103))
-    interactionset.add(trac1)
-    prp = ElementProperties(Traction2DElement)
-    prp.put(PRESSURE, -0.1)
-    prp.depend(PRESSURE, fct2, Field1D(TM,RE))
-    trac1.addProperty(prp)
-    
+    if p['bctype']=='pressure':
+        trac1 = LoadingInteraction(2) # pressure
+        trac1.push(groupset(103))
+        interactionset.add(trac1)
+        prp = ElementProperties(Traction2DElement)
+        prp.put(PRESSURE, -0.1)
+        prp.depend(PRESSURE, fct2, Field1D(TM,RE))
+        trac1.addProperty(prp)
+    elif p['bctype']=='deadload':
+        loadingset.define(groupset(103), Field1D(TY,GF1), -1e-4, fct2)
+    else:
+        raise Exception("Unknown bctype %s" % p['bctype'])
     
     # Time integration
     tsm = metafor.getTimeStepManager()
     tsm.setInitialTime(0.0, 0.02)
-    tsm.setNextTime(p['tend'], 1, 0.02)
+    tsm.setNextTime(p['tend'], 1, p['dtmax'])
 
     mim = metafor.getMechanicalIterationManager()
     mim.setMaxNbOfIterations(4)
@@ -95,7 +102,7 @@ def getMetafor(p={}):
     # results
     vmgr = metafor.getValuesManager()
     vmgr.add(1, MiscValueExtractor(metafor, EXT_T), 'time')
-    vmgr.add(2, DbNodalValueExtractor(groupset(104), Field1D(TY,RE)), 'dx')
+    vmgr.add(2, DbNodalValueExtractor(groupset(104), Field1D(TY,RE)), 'dy')
 
     # plots
     try:
