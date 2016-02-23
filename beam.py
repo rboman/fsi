@@ -92,6 +92,23 @@ def getMetafor(p={}):
     ti = AlphaGeneralizedTimeIntegration(metafor)
     metafor.setTimeIntegration(ti)
 
+    # results
+    vmgr = metafor.getValuesManager()
+    vmgr.add(1, MiscValueExtractor(metafor, EXT_T), 'time')
+    vmgr.add(2, DbNodalValueExtractor(groupset(104), Field1D(TY,RE)), 'dx')
+
+    # plots
+    try:
+        plot1 = DataCurveSet()
+        vmgr = metafor.getValuesManager()
+        plot1.add(VectorDataCurve(1, vmgr.getDataVector(1), vmgr.getDataVector(2)))
+        win1 = VizWin()
+        win1.add(plot1)
+        metafor.addObserver(win1)
+    except:
+        pass
+
+
     return metafor
 
 

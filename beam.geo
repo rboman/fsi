@@ -165,9 +165,6 @@ Physical Line(102) = {7, 5, 6};    // free surface of the beam
 Physical Line(103) = {7};          // upper surface of the beam (for tests only)
 Physical Surface(100) = {67};      // meshed beam
 
-
-
-
-
+Physical Point(104) = {7};         // upper right vertex
 
 
