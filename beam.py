@@ -11,8 +11,8 @@ def params(q={}):
     p={}
     p['tolNR']      = 1.0e-7        # Newton-Raphson tolerance
     p['tend']       = 2.            # final time
-    p['dtmax']      = 0.01          # max time step
-    p['bctype']     = 'deadload'    # pressure / deadload
+    p['dtmax']      = 0.005          # max time step
+    p['bctype']     = 'pydeadload'    # pressure / deadload
     p.update(q)
     return p
 
@@ -71,11 +71,23 @@ def getMetafor(p={}):
     fct2 = PieceWiseLinearFunction()
     fct2.setData(0.0, 0.0)
     fct2.setData(0.1, 1.0)
-    fct2.setData(0.1+1e-12, 0.0)
-    fct2.setData(1000., 0.0)    
+    fct2.setData(0.1+1e-15, 0.0)
+    fct2.setData(1e10, 0.0)    
+
+    def f(time):
+        val=0
+        t1=0.1
+        if(time<=0.1):
+           val=1.0/t1*time
+        else:
+           val=0.0
+        #print "f(%f)=%f" % (time,val)
+        return val
+    fct3 = PythonOneParameterFunction(f)
+
     
     if p['bctype']=='pressure':
-        trac1 = LoadingInteraction(2) # pressure
+        trac1 = LoadingInteraction(2)
         trac1.push(groupset(103))
         interactionset.add(trac1)
         prp = ElementProperties(Traction2DElement)
@@ -84,6 +96,8 @@ def getMetafor(p={}):
         trac1.addProperty(prp)
     elif p['bctype']=='deadload':
         loadingset.define(groupset(103), Field1D(TY,GF1), -1e-4, fct2)
+    elif p['bctype']=='pydeadload':
+        loadingset.define(groupset(103), Field1D(TY,GF1), -1e-4, fct3)    
     else:
         raise Exception("Unknown bctype %s" % p['bctype'])
     
