@@ -12,8 +12,14 @@ def params(q={}):
     p['tolNR']      = 1.0e-7        # Newton-Raphson tolerance
     p['tend']       = 2.            # final time
     p['dtmax']      = 0.005          # max time step
-    p['bctype']     = 'pydeadloads'    # pressure / pydeadload1
-                                       # deadload / pydeadloads
+    
+    # BC type
+    #p['bctype']     = 'pressure'     # uniform pressure
+    #p['bctype']     = 'deadload'     # uniform nodal load
+    #p['bctype']     = 'pydeadload1'  # uniform nodal load (python)  
+    p['bctype']     = 'pydeadloads'  # variable loads
+    #p['bctype']     = 'mpiloads'     # variable loads (mpi)
+                                       
     p.update(q)
     return p
 
@@ -77,17 +83,6 @@ def getMetafor(p={}):
     fct2.setData(0.1+1e-15, 0.0)
     fct2.setData(1e10, 0.0)    
 
-    #  - python fct
-    def f(time):
-        val=0
-        t1=0.1
-        if(time<=0.1):
-           val=1.0/t1*time
-        else:
-           val=0.0
-        #print "f(%f)=%f" % (time,val)
-        return val
-    fct3 = PythonOneParameterFunction(f)
 
     gr = groupset(103)
     if p['bctype']=='pressure':
@@ -101,7 +96,21 @@ def getMetafor(p={}):
     elif p['bctype']=='deadload':
         loadingset.define(gr, Field1D(TY,GF1), -1e-4, fct2)
     elif p['bctype']=='pydeadload1':
+    
+        #  - python fct
+        def f(time):
+            val=0
+            t1=0.1
+            if(time<=0.1):
+               val=1.0/t1*time
+            else:
+               val=0.0
+            #print "f(%f)=%f" % (time,val)
+            return val
+        fct3 = PythonOneParameterFunction(f)    
+    
         loadingset.define(gr, Field1D(TY,GF1), -1e-4, fct3) 
+        
     elif p['bctype']=='pydeadloads':
         # calculate xmin-xmax
         xmin=1e10
@@ -131,9 +140,11 @@ def getMetafor(p={}):
             #print "creating load on ", node
             obj = LObj(px-xmin, L)
             fct4 = PythonOneParameterFunction(obj)
-            loadingset.define(node, Field1D(TY,GF1), -3e-4, fct4)    
+            loadingset.define(node, Field1D(TY,GF1), -3e-4, fct4)
+    elif p['bctype']=='mpiloads':
+        pass    
     else:
-        raise Exception("Unknown bctype %s" % p['bctype'])
+        raise Exception("Unknown bctype '%s'" % p['bctype'])
     
     # Time integration
     tsm = metafor.getTimeStepManager()
