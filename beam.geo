@@ -140,7 +140,9 @@ Recombine Surface {38, 40, 42, 44, 46, 48};
 Physical Line("outlet") = {12};
 Physical Line("slipWall") = {13, 14, 10, 11};
 Physical Line("bodyWall") = {1, 2, 3, 4, 8, 7, 5, 6};
-Physical Surface("internal") = {38, 40, 48, 42, 44, 46, 50, 52, 54, 64, 62, 56, 60, 58};*/
+Physical Surface("internal") = {38, 40, 48, 42, 44, 46, 50, 52, 54, 64, 62, 56, 60, 58};*/ 
+// [RB] metafor is not able to read strings as id yet
+// [RB] I'll do that later
 Physical Line(1) = {9};
 Physical Line(2) = {12};
 Physical Line(3) = {13, 14, 10, 11};
