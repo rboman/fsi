@@ -106,8 +106,8 @@ def getMetafor(p={}):
 
     
     # Time integration
-    tsm = metafor.getTimeStepManager()
-    tsm.setInitialTime(0.0, 0.02)
+    #tsm = metafor.getTimeStepManager()
+    #tsm.setInitialTime(0.0, 0.02)
     #tsm.setNextTime(p['tend'], 1, p['dtmax'])
 
     mim = metafor.getMechanicalIterationManager()
