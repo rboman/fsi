@@ -67,48 +67,9 @@ def getMetafor(p={}):
     #Physical Line(101) - clamped side of the beam
     loadingset.define(groupset(101), Field1D(TX,RE))
     loadingset.define(groupset(101), Field1D(TY,RE))
-    
-    #Physical Line(102) - free surface of the beam
-    
+    #Physical Line(102) - free surface of the beam  
     #Physical Line(103) - upper surface of the beam (for tests only)
 
-    gr = groupset(103)
-
-    # calculate xmin-xmax
-    xmin=1e10
-    xmax=-1e10
-    nbnods=gr.getNumberOfMeshPoints()
-    for i in range(nbnods):
-        node = gr.getMeshPoint(i)
-        px = gr.getMeshPoint(i).getPos0().get1()
-        if px<xmin: xmin=px
-        if px>xmax: xmax=px
-    print "(xmin,xmax)=(%f,%f)" % (xmin,xmax)
-    L = xmax-xmin
-    print "L=%f" % L
-    #raw_input()
-    
-    class LObj:
-        def __init__(self, px, L):
-            self.px=px
-            self.L=L
-        def __call__(self, time):
-            import math
-            return time*math.sin(8*math.pi*self.px/self.L)
-        
-    for i in range(nbnods):
-        node = gr.getMeshPoint(i)
-        px = gr.getMeshPoint(i).getPos0().get1()
-        #print "creating load on ", node
-        obj = LObj(px-xmin, L)
-        fct4 = PythonOneParameterFunction(obj)
-        loadingset.define(node, Field1D(TY,GF1), -3e-4, fct4)
-
-    
-    # Time integration
-    #tsm = metafor.getTimeStepManager()
-    #tsm.setInitialTime(0.0, 0.02)
-    #tsm.setNextTime(p['tend'], 1, p['dtmax'])
 
     mim = metafor.getMechanicalIterationManager()
     mim.setMaxNbOfIterations(4)
@@ -117,10 +78,15 @@ def getMetafor(p={}):
     ti = AlphaGeneralizedTimeIntegration(metafor)
     metafor.setTimeIntegration(ti)
 
+    # visu
+    #tsm = metafor.getTimeStepManager()
+    #tsm.setInitialTime(0.0, 1.0)
+    #tsm.setNextTime(1.0, 1, 1.0)
+
     # results
-    vmgr = metafor.getValuesManager()
-    vmgr.add(1, MiscValueExtractor(metafor, EXT_T), 'time')
-    vmgr.add(2, DbNodalValueExtractor(groupset(104), Field1D(TY,RE)), 'dy')
+    #vmgr = metafor.getValuesManager()
+    #vmgr.add(1, MiscValueExtractor(metafor, EXT_T), 'time')
+    #vmgr.add(2, DbNodalValueExtractor(groupset(104), Field1D(TY,RE)), 'dy')
 
     return metafor
 
