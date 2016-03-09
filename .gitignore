@@ -4,6 +4,7 @@
 *.msh
 
 workspace
-
+*.txt
+*.bfac.gz
 
 

@@ -52,10 +52,16 @@ class MtfSolver:
         """
         performs a first run of metafor with all the required preprocessing.
         """
-        load(self.testname)         # loads the python module and creates mtf/workspace 
-        p = {}                      # parameters (todo)
-        self.metafor = instance(p)  # creates an instance of the metafor model
+        # loads the python module
+        #load(self.testname)         # use toolbox.utilities
+        exec("import %s" % self.testname)
+        exec("module = %s" % self.testname)
 
+        # create an instance of Metafor
+        p = {}                       # parameters (todo)
+        #self.metafor = instance(p)  # use toolbox.utilities
+        self.metafor = module.getMetafor(p)
+        
         # retrieve the f/s boundary and the related nodes
         groupset = self.metafor.getDomain().getGeometry().getGroupSet()
         gr = groupset(self.bndno)
@@ -83,7 +89,9 @@ class MtfSolver:
         tsm.setInitialTime(t1, dt0)
         tsm.setNextTime(t2, 1, dtmax)
         # launches metafor from t1 to t2
-        meta()
+        #meta()                  # use toolbox.utilities
+        log = wrap.LogFile("resFile.txt")
+        self.metafor.getTimeIntegration().integration()
         # at this stage, 2 archive files have been created in the workspace
 
     def __nextrun(self, t1, t2):
