@@ -79,9 +79,10 @@ def getMetafor(p={}):
     metafor.setTimeIntegration(ti)
 
     # visu
-    #tsm = metafor.getTimeStepManager()
-    #tsm.setInitialTime(0.0, 1.0)
-    #tsm.setNextTime(1.0, 1, 1.0)
+    if 0:
+        tsm = metafor.getTimeStepManager()
+        tsm.setInitialTime(0.0, 1.0)
+        tsm.setNextTime(1.0, 1, 1.0)
 
     # results
     #vmgr = metafor.getValuesManager()

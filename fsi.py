@@ -1,11 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: latin-1; -*-
-# ~/dev/Offi/oo_metaB/bin/Metafor -nogui ./fsi.py
+# ~/dev/Metafor/oo_metaB/bin/Metafor -nogui ./fsi.py
 
 import math
-from toolbox.utilities import *
+from utilities import *
 from wrap import *
 
+
+# ------------------------------------------------------------------------------
+# custom toolbox.utilities
+# ------------------------------------------------------------------------------
+
+
+
+# ------------------------------------------------------------------------------
 
 class NLoad:
     """
@@ -16,6 +24,7 @@ class NLoad:
     def __call__(self, time):
         return self.val
    
+# ------------------------------------------------------------------------------
                
 class MtfSolver:
     def __init__(self, testname, bndno):
@@ -150,6 +159,8 @@ class MtfSolver:
             py0 = node.getPos0().get2()   # initial position y 
             px = node.getPos(Configuration().currentConf).get1() # current x          
             py = node.getPos(Configuration().currentConf).get2() # current y                   
+            vx = node.getValue(Field1D(TX,GV)) # current vx          
+            vy = node.getValue(Field1D(TY,GV)) # current vy                    
             out[no] = (px,py)
         return out
          
@@ -164,8 +175,8 @@ def main():
     t1 = 0.0  # initial time
     dt = 0.5  # time step size
     
-    # we want 10 time steps
-    for j in range(10):
+    # we want 5 time steps
+    for j in range(5):
     
         # each time step is arbitrarily calculated twice (for testing purpose)
         for i in range(2):
