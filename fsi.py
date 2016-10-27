@@ -11,39 +11,33 @@ class NLoad:
     """
     Nodal load
     """
-    def __init__(self, val):
-        self.val = val
+    def __init__(self, val1, t1, val2, t2):
+        self.val1 = val1
+        self.t1 = t1
+        self.val2 = val2
+        self.t2 = t2
     def __call__(self, time):
-        return self.val
+        return self.val1 + (time-self.t1)/(self.t2-self.t1)*(self.val2-self.val1)
+    def nextstep(self):
+        self.t1 = self.t2
+        self.val1 = self.val2 
    
 # ------------------------------------------------------------------------------
                
 class MtfSolver:
-    def __init__(self, testname, bndno):
+    def __init__(self, testname, bndno, t1):
         self.testname = testname  # string (name of the module of the solid model)
         self.bndno = bndno        # phygroup# of the f/s interface
+        self.neverrun=True
         
         # internal vars
         self.fnods = {}           # dict of interface nodes / prescribed forces
-        self.t1      = 0.0        # last reference time        
-        self.t2      = 0.0        # last calculated time
+        self.t1      = t1         # last reference time        
+        self.t2      = t1         # last calculated time
         self.metafor = None       # link to Metafor objet
 
-    def run(self, t1, t2):
-        """
-        calculates one increment from t1 to t2.
-        """
-        if(not self.metafor):
-            self.__firstrun(t1, t2)
-        else:
-            self.__nextrun(t1, t2)
-        self.t1 = t1
-        self.t2 = t2
-
-    def __firstrun(self, t1, t2):
-        """
-        performs a first run of metafor with all the required preprocessing.
-        """
+        # init solid solver
+        
         # loads the python module
         #load(self.testname)         # use toolbox.utilities
         exec("import %s" % self.testname)
@@ -65,14 +59,30 @@ class MtfSolver:
         for i in range(nbnods):
             node = gr.getMeshPoint(i)
             no = node.getNo()
-            fx = NLoad(0.0)
-            fy = NLoad(0.0)
+            fx = NLoad(self.t1, 0.0, self.t2, 0.0)
+            fy = NLoad(self.t1, 0.0, self.t2, 0.0)
             self.fnods[no] = (node, fx, fy)
             fctx = PythonOneParameterFunction(fx)
             fcty = PythonOneParameterFunction(fy)
             loadingset.define(node, Field1D(TX,GF1), 1.0, fctx) 
-            loadingset.define(node, Field1D(TY,GF1), 1.0, fcty)       
+            loadingset.define(node, Field1D(TY,GF1), 1.0, fcty) 
 
+    def run(self, t1, t2):
+        """
+        calculates one increment from t1 to t2.
+        """
+        if(self.neverrun):
+            self.__firstrun(t1, t2)
+            self.neverrun=False
+        else:
+            self.__nextrun(t1, t2)
+        self.t1 = t1
+        self.t2 = t2
+
+    def __firstrun(self, t1, t2):
+        """
+        performs a first run of metafor with all the required preprocessing.
+        """
         # this is the first run - initialize the timestep manager of metafor
         tsm = self.metafor.getTimeStepManager()
         dt    = t2-t1  # time-step size
@@ -105,13 +115,22 @@ class MtfSolver:
             tsm = self.metafor.getTimeStepManager()
             dt=t2-t1
             dtmax=dt
-            tsm.setNextTime(t2, 1, dtmax)            
+            tsm.setNextTime(t2, 1, dtmax/2)    # forces at least 2 time increments   
             
             loader = fac.FacManager(self.metafor)
             nt1 = loader.lookForFile(0)
             nt2 = loader.lookForFile(1)
             loader.erase(nt1) # delete first fac
             self.metafor.getTimeIntegration().restart(nt2) 
+
+    def nextstep(self):
+        """
+        prepare the boundary nodes for the next fsi increment
+        """
+        for no in self.fnods.iterkeys():
+            node,fx,fy = self.fnods[no]
+            fx.nextstep()        
+            fy.nextstep()        
 
     def fakefluidsolver(self, time):
         """
@@ -137,15 +156,17 @@ class MtfSolver:
             px = node.getPos0().get1()     # x coordinate of the node       
             valx = 0.0 
             valy = -3e-4*time*math.sin(8*math.pi*px/L) # dummy fct
-            self.applyload(no, valx, valy)
+            self.applyload(no, valx, valy, time)
 
-    def applyload(self, no, valx, valy):
+    def applyload(self, no, valx, valy, time):
         """
         prescribes given nodal forces (valx,valy) to node #no
         """
         node,fx,fy = self.fnods[no]
-        fx.val = valx
-        fy.val = valy
+        fx.val2 = valx
+        fy.val2 = valy
+        fx.t2 = time
+        fy.t2 = time
 
     def getdefo(self):
         """
@@ -166,7 +187,6 @@ class MtfSolver:
          
 
 def main():
-    solid = MtfSolver('beam', 103)
     
     # --------------------------
     # fake FSI solver
@@ -174,6 +194,8 @@ def main():
     
     t1 = 0.0  # initial time
     dt = 0.5  # time step size
+    
+    solid = MtfSolver('beam', 103, t1)
     
     # we want 5 time steps
     for j in range(5):
@@ -197,6 +219,7 @@ def main():
             out = solid.getdefo()
             print out   # <= todo: give 'out' to the fluid solver and update the fluid mesh
 
+        solid.nextstep()
         t1=t2 # fsi loop has converged - time t2 is accepted
     
     # end.
