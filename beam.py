@@ -38,7 +38,7 @@ def getMetafor(p={}):
     from toolbox.gmsh import GmshImport
     f = os.path.join(os.path.dirname(__file__), "beam.geo")
     importer = GmshImport(f, domain)
-    importer.execute()
+    importer.execute2D()
 
     groupset = domain.getGeometry().getGroupSet()    
 
